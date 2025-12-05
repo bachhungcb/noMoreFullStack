@@ -52,16 +52,34 @@ router.post('/', async (req, res) => {
 // 3. PUT: Update student Info
 router.put('/:id', async (req, res) => {
     try {
+        // --- SECURITY LAYER: MASS ASSIGNMENT PREVENTION ---
+        const { name, age, class: className } = req.body;
+
+        // validation
+        if (!name || !age || !className) {
+            return res.status(400).json({ error: "Thiếu thông tin bắt buộc" });
+        }
+
+
         // Broken Object Level Authorization (BOLA): 
         // Cần đảm bảo người dùng có quyền sửa ID này
         const updatedStudent = await Student.findByIdAndUpdate(
             req.params.id,
-            req.body,
-            { new: true }
+            {
+                name: name.trim(),
+                age: age,
+                class: className.trim()
+            },
+            {
+                new: true,           // Trả về dữ liệu MỚI sau khi sửa
+                runValidators: true  // Bắt Mongoose chạy lại validate (ví dụ: type check)
+            }
         );
+
         if (!updatedStudent) {
             return res.status(404).json({ error: "Student not found" });
         }
+        
         res.json(updatedStudent);
     } catch (err) {
         res.status(400).json({ error: err.message });
