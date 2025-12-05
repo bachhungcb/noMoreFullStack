@@ -7,7 +7,15 @@ import Student from '../Models/Student.js';
 // 1. GET: Get all students
 router.get('/', async (req, res) => {
     try {
-        const students = await Student.Find();
+        const { name } = req.query;
+
+        let query = {}
+
+        if (name) {
+            query.name = { $regex: name, $options: 'i' }
+        }
+
+        const students = await Student.Find(query);
         res.json(students);
     } catch (err) {
         res.status(500).json({ error: "Internal Server Error" });

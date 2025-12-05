@@ -13,15 +13,26 @@ function App() {
 
   // Fetch data when load page (Initial Load)
   useEffect(() => {
-    fetchStudents();
-  }, []);
+    // Tạo một bộ đếm thời gian (Timer)
+    const delayDebounceFn = setTimeout(() => {
+      fetchStudents(searchTerm); // Chỉ gọi API sau khi ngừng gõ 500ms
+    }, 500);
 
-  const fetchStudents = async () => {
+    // Cleanup function: Xóa timer cũ nếu người dùng gõ tiếp trước 500ms
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
+
+  const fetchStudents = async (keyword = "") => {
     try {
-      const res = await axios.get('http://localhost:5000/api/students');
+      // Gửi Query Parameter lên Server (Sanitization tự động bởi axios)
+      const url = keyword
+        ? `http://localhost:5000/api/students?name=${keyword}`
+        : 'http://localhost:5000/api/students';
+
+      const res = await axios.get(url);
       setStudents(res.data);
     } catch (error) {
-      console.error("Lỗi kết nối API:", error);
+      console.error("Connection Error:", error);
     }
   };
 
@@ -75,14 +86,14 @@ function App() {
     if (window.confirm("CẢNH BÁO: Hành động này không thể hoàn tác. Bạn có chắc chắn muốn xóa?")) {
       try {
         await axios.delete(`http://localhost:5000/api/students/${id}`);
-        
+
         // Cập nhật giao diện (UI Update)
-        // Cách 1: Gọi lại API (Chắc chắn đồng bộ với Server nhưng tốn băng thông)
-        fetchStudents(); 
-        
-        // Cách 2 (Optimistic Update): Tự lọc mảng local để giao diện phản hồi nhanh hơn
+        // Cách 1: Gọi lại API
+        fetchStudents();
+
+        // Cách 2: Tự lọc mảng local để giao diện phản hồi nhanh hơn
         // setStudents(prev => prev.filter(s => s._id !== id));
-        
+
         alert("Đã xóa học sinh khỏi hệ thống.");
       } catch (error) {
         console.error("Delete Error:", error);
@@ -99,7 +110,7 @@ function App() {
     setEditingStudent(null); // Reset về chế độ thêm mới
   };
 
-  
+
   // Edit mode
   const handleEdit = (student) => {
     setForm({ name: student.name, age: student.age, class: student.class });
@@ -113,7 +124,7 @@ function App() {
   );
 
   // 2. Sorting
-  const sortedStudents = [...filteredStudents].sort((a, b) => {
+  const sortedStudents = [...students].sort((a, b) => {
     if (a.name < b.name) return sortAsc ? -1 : 1;
     if (a.name > b.name) return sortAsc ? 1 : -1;
     return 0;
@@ -126,17 +137,17 @@ function App() {
       </header>
 
       <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-        
+
         {/* Tái sử dụng Component StudentForm */}
-        <StudentForm 
-            onSubmit={handleFormSubmit} 
-            initialData={editingStudent} 
-            onCancel={handleCancelEdit}
+        <StudentForm
+          onSubmit={handleFormSubmit}
+          initialData={editingStudent}
+          onCancel={handleCancelEdit}
         />
 
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <input 
-            placeholder="Tìm kiếm theo tên..." 
+          <input
+            placeholder="Tìm kiếm theo tên..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{ padding: '5px', width: '60%' }}
@@ -157,21 +168,21 @@ function App() {
           </thead>
           <tbody>
             {sortedStudents.length > 0 ? (
-                sortedStudents.map((s) => (
+              sortedStudents.map((s) => (
                 <tr key={s._id}>
-                    <td style={{ padding: '8px' }}>{s.name}</td>
-                    <td style={{ padding: '8px', textAlign: 'center' }}>{s.age}</td>
-                    <td style={{ padding: '8px', textAlign: 'center' }}>{s.class}</td>
-                    <td style={{ padding: '8px', textAlign: 'center' }}>
+                  <td style={{ padding: '8px' }}>{s.name}</td>
+                  <td style={{ padding: '8px', textAlign: 'center' }}>{s.age}</td>
+                  <td style={{ padding: '8px', textAlign: 'center' }}>{s.class}</td>
+                  <td style={{ padding: '8px', textAlign: 'center' }}>
                     <button onClick={() => handleEditClick(s)} style={{ marginRight: '5px', cursor: 'pointer' }}>Sửa</button>
                     <button onClick={() => handleDelete(s._id)} style={{ color: 'red', cursor: 'pointer' }}>Xóa</button>
-                    </td>
+                  </td>
                 </tr>
-                ))
+              ))
             ) : (
-                <tr>
-                    <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>Không tìm thấy dữ liệu</td>
-                </tr>
+              <tr>
+                <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>Không tìm thấy dữ liệu</td>
+              </tr>
             )}
           </tbody>
         </table>
