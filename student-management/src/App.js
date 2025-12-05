@@ -70,12 +70,23 @@ function App() {
 
   // Delete
   const handleDelete = async (id) => {
-    if (window.confirm("Xác nhận xóa học sinh này? (Irreversible Action)")) {
+    // Confirmation Dialog (Cơ chế an toàn UX)
+    // Ngăn chặn việc click nhầm gây mất dữ liệu (Data Loss Prevention)
+    if (window.confirm("CẢNH BÁO: Hành động này không thể hoàn tác. Bạn có chắc chắn muốn xóa?")) {
       try {
         await axios.delete(`http://localhost:5000/api/students/${id}`);
-        fetchStudents();
+        
+        // Cập nhật giao diện (UI Update)
+        // Cách 1: Gọi lại API (Chắc chắn đồng bộ với Server nhưng tốn băng thông)
+        fetchStudents(); 
+        
+        // Cách 2 (Optimistic Update): Tự lọc mảng local để giao diện phản hồi nhanh hơn
+        // setStudents(prev => prev.filter(s => s._id !== id));
+        
+        alert("Đã xóa học sinh khỏi hệ thống.");
       } catch (error) {
         console.error("Delete Error:", error);
+        alert("Lỗi: Không thể xóa học sinh. Vui lòng thử lại.");
       }
     }
   };

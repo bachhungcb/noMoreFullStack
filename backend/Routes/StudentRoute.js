@@ -79,7 +79,7 @@ router.put('/:id', async (req, res) => {
         if (!updatedStudent) {
             return res.status(404).json({ error: "Student not found" });
         }
-        
+
         res.json(updatedStudent);
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -89,10 +89,19 @@ router.put('/:id', async (req, res) => {
 // 4.  DELETE: Delete
 router.delete('/:id', async (req, res) => {
     try {
+        const id = req.params.id;
+
+        // --- SECURITY: IDOR PREVENTION
+        // TODO: Implement authorization check
+
+
         const result = await Student.findByIdAndDelete(req.params.id);
         if (!result) {
             return res.status(404).json({ error: "Student not found" });
         }
+        // --- AUDIT TRAIL
+        console.log(`[AUDIT] Student ID ${id} deleted at ${new Date().toISOString()}`);
+
         res.json({ message: "Đã xóa thành công" });
     } catch (err) {
         res.status(500).json({ error: err.message });
