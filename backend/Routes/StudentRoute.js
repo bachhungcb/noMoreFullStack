@@ -17,10 +17,35 @@ router.get('/', async (req, res) => {
 // 2. POST: Add new student
 router.post('/', async (req, res) => {
     try {
-        const newStudent = await Student.create(req.body);
+        // --- SECURITY LAYER: INPUT VALIDATION ---
+        const { name, age, class: className } = req.body;
+
+        if (!name || !age || !className) {
+            return res.status(400).json({
+                error: "Missing required fields",
+                code: "INVALID_INPUT"
+            });
+        }
+
+        // Age validation
+        if (age < 0 || age > 100) {
+            return res.status(400).json({
+                error: "Invalid age value",
+                code: "INVALID_AGE"
+            });
+        }
+
+        // if data is clean, save into DB
+        const newStudent = await Student.create({
+            name: name.trim(), // Sanitize: Cắt bỏ khoảng trắng thừa
+            age: age,
+            class: className.trim()
+        });
+
         res.status(201).json(newStudent);
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        console.error("Create Student Error:", err);
+        res.status(400).json({ error: "Could not create student" });
     }
 })
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import './App.css'
+import StudentForm from './components/AddStudentForm';
 
 function App() {
   // State management
@@ -24,6 +25,25 @@ function App() {
     }
   };
 
+  const handleFormSubmit = async (formData) => {
+    try {
+      if (editingStudent) {
+        // --- LOGIC UPDATE (PUT) ---
+        // Privilege Escalation Check: Đảm bảo user có quyền sửa resource này (thường check ở Backend)
+        await axios.put(`http://localhost:5000/api/students/${editingStudent._id}`, formData);
+        alert("Cập nhật thành công!");
+        setEditingStudent(null); // Thoát chế độ sửa
+      } else {
+        // --- LOGIC CREATE (POST) ---
+        await axios.post('http://localhost:5000/api/students', formData);
+        alert("Thêm mới thành công!");
+      }
+      fetchStudents(); // Refresh data để đảm bảo tính toàn vẹn (Integrity)
+    } catch (error) {
+      console.error("API Error:", error);
+      alert(error.response?.data?.error || "Có lỗi xảy ra");
+    }
+  };
   // Input handling
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -50,16 +70,25 @@ function App() {
 
   // Delete
   const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa?")) {
+    if (window.confirm("Xác nhận xóa học sinh này? (Irreversible Action)")) {
       try {
         await axios.delete(`http://localhost:5000/api/students/${id}`);
         fetchStudents();
       } catch (error) {
-        console.error("Lỗi xóa dữ liệu:", error);
+        console.error("Delete Error:", error);
       }
     }
   };
 
+  const handleEditClick = (student) => {
+    setEditingStudent(student); // Kích hoạt chế độ sửa, truyền dữ liệu vào form
+  };
+
+  const handleCancelEdit = () => {
+    setEditingStudent(null); // Reset về chế độ thêm mới
+  };
+
+  
   // Edit mode
   const handleEdit = (student) => {
     setForm({ name: student.name, age: student.age, class: student.class });
@@ -68,7 +97,7 @@ function App() {
 
   // --- LOGIC PROCESSING DATA ---
   // 1. Search / Filtering
-  const filteredStudents = students.filter(s => 
+  const filteredStudents = students.filter(s =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -81,55 +110,58 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header" style={{minHeight: 'auto', padding: '20px'}}>
-        <h1>Quản Lý Học Sinh</h1>
+      <header className="App-header" style={{ minHeight: 'auto', padding: '20px', fontSize: '20px' }}>
+        <p>Quản Lý Học Sinh (Secure MERN App)</p>
       </header>
 
-      <div style={{ padding: '20px' }}>
-        {/* Form Input */}
-        <div style={{ marginBottom: '20px' }}>
-          <input name="name" placeholder="Tên" value={form.name} onChange={handleChange} />
-          <input name="age" placeholder="Tuổi" type="number" value={form.age} onChange={handleChange} />
-          <input name="class" placeholder="Lớp" value={form.class} onChange={handleChange} />
-          <button onClick={handleSubmit}>
-            {editingId ? "Cập nhật" : "Thêm mới"}
-          </button>
-        </div>
+      <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+        
+        {/* Tái sử dụng Component StudentForm */}
+        <StudentForm 
+            onSubmit={handleFormSubmit} 
+            initialData={editingStudent} 
+            onCancel={handleCancelEdit}
+        />
 
-        {/* Search & Sort Controls */}
-        <div style={{ marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
           <input 
             placeholder="Tìm kiếm theo tên..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ padding: '5px', width: '60%' }}
           />
-          <button onClick={() => setSortAsc(!sortAsc)} style={{marginLeft: '10px'}}>
+          <button onClick={() => setSortAsc(!sortAsc)} style={{ padding: '5px' }}>
             Sắp xếp: {sortAsc ? "A-Z" : "Z-A"}
           </button>
         </div>
 
-        {/* Data Presentation (Table) */}
-        <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
+        <table border="1" style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
+          <thead style={{ backgroundColor: '#f2f2f2' }}>
             <tr>
-              <th>Tên</th>
-              <th>Tuổi</th>
-              <th>Lớp</th>
-              <th>Hành động</th>
+              <th style={{ padding: '10px' }}>Tên</th>
+              <th style={{ padding: '10px' }}>Tuổi</th>
+              <th style={{ padding: '10px' }}>Lớp</th>
+              <th style={{ padding: '10px' }}>Hành động</th>
             </tr>
           </thead>
           <tbody>
-            {sortedStudents.map((s) => (
-              <tr key={s._id}>
-                <td>{s.name}</td>
-                <td>{s.age}</td>
-                <td>{s.class}</td>
-                <td>
-                  <button onClick={() => handleEdit(s)}>Sửa</button>
-                  <button onClick={() => handleDelete(s._id)} style={{ color: 'red' }}>Xóa</button>
-                </td>
-              </tr>
-            ))}
+            {sortedStudents.length > 0 ? (
+                sortedStudents.map((s) => (
+                <tr key={s._id}>
+                    <td style={{ padding: '8px' }}>{s.name}</td>
+                    <td style={{ padding: '8px', textAlign: 'center' }}>{s.age}</td>
+                    <td style={{ padding: '8px', textAlign: 'center' }}>{s.class}</td>
+                    <td style={{ padding: '8px', textAlign: 'center' }}>
+                    <button onClick={() => handleEditClick(s)} style={{ marginRight: '5px', cursor: 'pointer' }}>Sửa</button>
+                    <button onClick={() => handleDelete(s._id)} style={{ color: 'red', cursor: 'pointer' }}>Xóa</button>
+                    </td>
+                </tr>
+                ))
+            ) : (
+                <tr>
+                    <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>Không tìm thấy dữ liệu</td>
+                </tr>
+            )}
           </tbody>
         </table>
       </div>
