@@ -1,17 +1,16 @@
 import express from 'express'
 import cors from 'cors'
-import connectDB from './Config/dbConfig'
-import Student from './Models/Student.js'
-import { json } from 'body-parser'
-const studentRoutes = require('./routes/students');
+import connectDB from './Config/dbConfig.js';
+import studentRoutes from './routes/StudentRoute.js';
+
+
 
 const port = 5000
 const app = express()
 
 // --- MIDDLEWARE ---
 app.use(cors())
-app.use(json())
-
+app.use(express.json())
 // --- CONNECT TO DATABASE ---
 connectDB()
 

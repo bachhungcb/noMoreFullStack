@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
             query.name = { $regex: name, $options: 'i' }
         }
 
-        const students = await Student.Find(query);
+        const students = await Student.find(query);
         res.json(students);
     } catch (err) {
         res.status(500).json({ error: "Internal Server Error" });
@@ -116,4 +116,4 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

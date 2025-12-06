@@ -7,4 +7,4 @@ const studentSchema = new Schema({
     class: { type: String, required: true }
 }, { collection: 'students' });
 
-module.exports = moongoose.model('Student', studentSchema);
+export default moongoose.model('Student', studentSchema);

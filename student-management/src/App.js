@@ -10,7 +10,7 @@ function App() {
   const [editingId, setEditingId] = useState(null); // Editing ID
   const [searchTerm, setSearchTerm] = useState(""); // Searching keyword
   const [sortAsc, setSortAsc] = useState(true); // Sorting status
-
+  const [editingStudent,setEditingStudent] = useState(null);
   // Fetch data when load page (Initial Load)
   useEffect(() => {
     // Tạo một bộ đếm thời gian (Timer)
@@ -133,7 +133,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header" style={{ minHeight: 'auto', padding: '20px', fontSize: '20px' }}>
-        <p>Quản Lý Học Sinh (Secure MERN App)</p>
+        <p>Quản Lý Học Sinh</p>
       </header>
 
       <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
